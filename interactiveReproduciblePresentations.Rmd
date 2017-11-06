@@ -1,7 +1,7 @@
 ---
 title: "Exponential Smoothing"
-author: "Ahmad Al-Kashef"
-date: "January 19, 2017"
+author: "Pablo Benavides"
+date: "January 05, 2017"
 output: ioslides_presentation
 ---
 
