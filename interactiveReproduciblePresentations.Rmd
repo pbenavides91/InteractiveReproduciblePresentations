@@ -1,0 +1,126 @@
+---
+title: "Exponential Smoothing"
+author: "Ahmad Al-Kashef"
+date: "January 19, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, warning = FALSE, message = FALSE, results = "hold"}
+rm(list = ls()) # clear all environment variables
+suppressPackageStartupMessages(library(plotly))
+```
+
+## Introduction
+
+This is an R Markdown presentation that features a plot created with Plotly.
+
+The subject of the presentation is exponential smoothing, applied to a habit scoring scenario.
+
+You can learn more about it at:
+
+- [Exponential Smoothing Explained](http://www.inventoryops.com/articles/exponential_smoothing.htm])
+- [Exponential Smoothing - Wikipedia](https://en.m.wikipedia.org/wiki/Exponential_smoothing])
+
+## Habit Forming Data
+
+The following chunck of R code creates a list of random values of 0 and 1. 
+
+Assuming this is how one person grew a daily habit. The 0's signify the days he missed, and the 1's signify the days he did not.
+
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+set.seed(1)
+habit <- c(rbinom(30, 1, 0.05), # 30 values, prob. of 1 = 0.05
+           rbinom(60, 1, 0.1), # prob. of 0 = 1 - 0.1
+           rbinom(30, 1, 0.5), 
+           rbinom(60, 1, 0.7), 
+           rbinom(60, 1, 0.8), 
+           rbinom(60, 1, 0.9), 
+           rbinom(65, 1, 0.25),
+           rbinom(30, 1, 0.05),
+           rbinom(60, 1, 0.8))
+```
+
+## Moving Average
+
+The simplist way to calculate scores of how well (frequent) the habit is kept is by averaging over a weekly window.  
+
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+movingAverage <- rep(0, length(habit))
+windowSize <- 7
+for (i in 1:(length(habit)-windowSize))
+{
+  if (i == 1)
+  {
+    movingAverage[1] <- 0
+  } else if ((i %% 7) != 0) {
+    movingAverage[i] <- movingAverage[i-1]
+  } else {
+    movingAverage[i] <- sum(habit[i:(i+windowSize)])/windowSize
+  }
+}
+```
+
+## Exponential Smoothing
+
+The disadvantage of a moving average is that the score is only limited to the window. It doesn't matter how well the habit was maintained before the window. Moving averages also suffer from latency; the size of the window.
+
+Exponential smoothing is aleviates these disadvantages. All the history matters and there is a latency of 2 day only. 
+
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+score1 <- rep(0, length(habit)) # all zeros score list
+alpha1 = 0.2
+for (i in 3:length(score1)) 
+{
+ score1[i] <- alpha1 * habit[i-1] + (1 - alpha1) * score1[i-2]
+ score1[i] <- round(score1[i], 2)
+}
+```
+
+## Alpha
+
+*Alpha* is the smoothing factor. It balances the weights between the current state `(habit[i-1])` and the history `score1[i-2]`; how much history you want to take into consideration.
+
+Let's decrease the smoothing factor:
+
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+score2 <- rep(0, length(habit))
+alpha2 = 0.02
+for (i in 3:length(score2))
+{
+  score2[i] <- alpha2 * habit[i-1] + (1 - alpha2) * score2[i-2] 
+  score2[i] <- round(score2[i], 2)
+}
+```
+
+## Plotly
+
+The `plotly` library is used to build an interactive plot of the moving average and exponential smoothing scores.
+
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+movingAverageFrame <- data.frame(
+  value = movingAverage, 
+  index = rep("Moving Average", length(movingAverage)), 
+  id = 1:length(movingAverage))
+score1Frame <- data.frame(
+  value = score1, 
+  index = rep("Exp' Smoothing, alpha=0.2", length(score1)), 
+  id = 1:length(score1))
+score2Frame <- data.frame(
+  value = score2, 
+  index = rep("Exp' Smoothing, alpha=0.02", length(score2)), 
+  id = 1:length(score2))
+plotFrame <- rbind(movingAverageFrame, score1Frame, score2Frame)
+```
+
+##
+```{r, warning = FALSE, message = FALSE, results = "hold", echo = TRUE}
+plot_ly() %>% 
+  add_lines(x = plotFrame$id, 
+            y = plotFrame$value, 
+            color = plotFrame$index) %>%
+  layout(legend = list(x = 0, y = 1))
+```
