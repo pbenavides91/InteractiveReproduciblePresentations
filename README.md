@@ -2,8 +2,6 @@
 
 In this project, I develop an HTML Presentation using **R Markdown** that features a plot created with **Plotly**.
 
-View a published version of the created product at https://alkashef.github.io/interactiveReproduciblePresentations/
-
 Keywords: `rmarkdown`, `plotly`, `exponential smoothing`, `moving average`, `reproducible`, `data products`, `R`
 
 ## Project Files ##
